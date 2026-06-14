@@ -1,0 +1,960 @@
+<link rel="stylesheet" href="/static/css/style.css">
+
+<div class="bt-form jsfw-page">
+    <div class="bt-w-main">
+        <div class="bt-w-menu">
+            <p class="bgw" onclick="bt_js_challenge.getSites()">&#9632; 站点防火墙</p>
+            <p onclick="bt_js_challenge.getChallengeLogs()">&#9776; 挑战日志</p>
+            <p onclick="bt_js_challenge.getLogs()">&#8635; 操作日志</p>
+        </div>
+        <div class="bt-w-con pd15">
+            <div class="plugin_body jsfw-shell"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===============================================
+   星辰云IDC JS挑战防火墙 v1.3
+   设计语言: 干净、现代、层次分明
+   =============================================== */
+
+/* ---- 全局 ---- */
+.jsfw-page { color: #1e293b; background: #f8fafc; }
+.jsfw-page .bt-w-con { background: #f8fafc; }
+.jsfw-shell { padding-bottom: 24px; }
+
+/* ---- 侧边栏 ---- */
+.jsfw-page .bt-w-menu {
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+    padding-top: 20px;
+    width: 172px;
+}
+.jsfw-page .bt-w-menu p {
+    margin: 2px 10px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: .1px;
+    transition: background .12s ease, color .12s ease;
+}
+.jsfw-page .bt-w-menu p:hover { background: #f1f5f9; color: #0f172a; }
+.jsfw-page .bt-w-menu p.bgw {
+    background: #022c22;
+    color: #4ade80;
+    box-shadow: 0 2px 8px rgba(2,44,34,.25);
+}
+.jsfw-page .bt-w-con { padding: 24px 28px; background: #f8fafc; }
+
+/* 页面切换动画 */
+.jsfw-shell > * { animation: fadeUp .2s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---- 顶部工具栏 ---- */
+.jsfw-topbar {
+    margin-bottom: 20px;
+    padding: 20px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.03);
+}
+.jsfw-heading { min-width: 0; }
+.jsfw-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -.3px;
+}
+.jsfw-subtitle {
+    margin-top: 4px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+}
+.jsfw-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* 搜索 / 筛选 */
+.jsfw-search { width: 220px; height: 36px; box-sizing: border-box; }
+.jsfw-filter { width: 110px; height: 36px; box-sizing: border-box; }
+.jsfw-search, .jsfw-filter {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    padding: 0 12px;
+    color: #334155;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.jsfw-search:hover, .jsfw-filter:hover { border-color: #cbd5e1; }
+.jsfw-search:focus, .jsfw-filter:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.06);
+    outline: none;
+}
+
+/* 按钮 */
+.jsfw-actions .btn,
+.jsfw-head-actions .btn {
+    border-radius: 8px;
+    min-width: 54px;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 14px;
+    transition: all .12s ease;
+    border: 1px solid transparent;
+}
+.jsfw-actions .btn-default,
+.jsfw-head-actions .btn-default {
+    background: #fff;
+    border-color: #e2e8f0;
+    color: #334155;
+}
+.jsfw-actions .btn-default:hover,
+.jsfw-head-actions .btn-default:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+.jsfw-head-actions .btn-success {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #fff;
+}
+.jsfw-head-actions .btn-success:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+}
+.jsfw-batch-bar .btn-success {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #fff;
+}
+.jsfw-batch-bar .btn-success:hover { background: #1e293b; }
+.jsfw-batch-bar .btn-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+.jsfw-batch-bar .btn-danger:hover { background: #dc2626; }
+.btn.is-loading { pointer-events: none; opacity: .65; }
+
+/* 全选标签 */
+.jsfw-actions label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all .12s ease;
+}
+.jsfw-actions label:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.jsfw-actions label input[type="checkbox"] {
+    margin-right: 5px;
+    accent-color: #0f172a;
+    width: 14px; height: 14px;
+}
+
+/* ---- 批量操作栏 ---- */
+.jsfw-batch-bar {
+    display: none;
+    margin-bottom: 16px;
+    padding: 12px 20px;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    background: #f0fdf4;
+    font-size: 13px;
+    color: #14532d;
+}
+.jsfw-batch-bar.visible { display: flex; }
+.jsfw-batch-count {
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 14px;
+    background: rgba(34,197,94,.15);
+    color: #14532d;
+}
+
+/* ---- 统计卡片 ---- */
+.jsfw-stats { margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.jsfw-stat {
+    padding: 22px 24px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+}
+.jsfw-stat:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 16px rgba(0,0,0,.04);
+}
+.jsfw-stat-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.jsfw-stat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+.jsfw-stat.active .jsfw-stat-dot { background: #22c55e; }
+.jsfw-stat.warn .jsfw-stat-dot { background: #f59e0b; }
+.jsfw-stat-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+.jsfw-stat-value {
+    display: block;
+    font-size: 36px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -1.5px;
+    line-height: 1;
+}
+.jsfw-stat-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+.jsfw-stat.active { border-color: #bbf7d0; background: #f0fdf4; }
+.jsfw-stat.active .jsfw-stat-value { color: #16a34a; }
+.jsfw-stat.warn { border-color: #fef3c7; background: #fffbeb; }
+.jsfw-stat.warn .jsfw-stat-value { color: #d97706; }
+
+/* ---- 站点卡片 ---- */
+.jsfw-site-list { display: grid; gap: 14px; }
+.jsfw-site {
+    position: relative;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.jsfw-site:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 20px rgba(0,0,0,.05);
+}
+.jsfw-site:before {
+    content: "";
+    position: absolute;
+    left: 0; top: 12px; bottom: 12px;
+    width: 3px;
+    background: #e2e8f0;
+    border-radius: 0 3px 3px 0;
+}
+.jsfw-site.is-active:before { background: #22c55e; }
+.jsfw-site.is-active { border-color: #bbf7d0; }
+.jsfw-site.is-unsupported:before { background: #fbbf24; }
+.jsfw-site.is-selected {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.06);
+}
+.jsfw-site-check {
+    position: absolute;
+    left: 16px; top: 22px;
+    z-index: 5;
+    width: 18px; height: 18px;
+    cursor: pointer;
+    accent-color: #0f172a;
+}
+
+/* 站点头部 */
+.jsfw-site-head {
+    min-height: 72px;
+    padding: 18px 24px 14px 46px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.jsfw-site-head-left { min-width: 0; }
+.jsfw-site-name {
+    display: block;
+    max-width: 540px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -.2px;
+}
+.jsfw-site-path {
+    display: block;
+    max-width: 660px;
+    margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #94a3b8;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+}
+.jsfw-site-meta {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.jsfw-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #64748b;
+}
+.jsfw-pill.ok   { background: #dcfce7; color: #14532d; }
+.jsfw-pill.warn { background: #fef3c7; color: #78350f; }
+.jsfw-pill.info { background: #dbeafe; color: #1e3a8a; }
+
+/* 开关 */
+.jsfw-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.jsfw-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: #fff;
+    transition: border-color .12s ease;
+}
+.jsfw-switch:hover { border-color: #cbd5e1; }
+.jsfw-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.jsfw-slider {
+    position: relative;
+    width: 44px; height: 24px;
+    border-radius: 20px;
+    background: #cbd5e1;
+    transition: background .15s ease;
+}
+.jsfw-slider:after {
+    content: "";
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+    transition: left .15s ease;
+}
+.jsfw-switch input:checked + .jsfw-slider { background: #22c55e; }
+.jsfw-switch input:checked + .jsfw-slider:after { left: 22px; }
+.jsfw-switch input:disabled + .jsfw-slider { opacity: .35; }
+
+/* ---- 表单区域 ---- */
+.jsfw-site-body { background: #fff; border-radius: 0 0 12px 12px; }
+.jsfw-site-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.jsfw-site-section:last-child { border-bottom: none; }
+.jsfw-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+.jsfw-section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #0f172a;
+}
+.jsfw-section-title span {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: .1px;
+}
+.jsfw-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px 18px;
+}
+.jsfw-field { min-width: 0; }
+.jsfw-field.wide { grid-column: span 2; }
+.jsfw-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 7px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+}
+.jsfw-label-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 5px;
+    background: #f1f5f9;
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 700;
+}
+.jsfw-control {
+    width: 100%;
+    height: 40px;
+    box-sizing: border-box;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 0 12px;
+    color: #0f172a;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.jsfw-control:hover { border-color: #cbd5e1; }
+.jsfw-control:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.06);
+    outline: none;
+}
+.jsfw-inline-unit { position: relative; display: block; }
+.jsfw-inline-unit .jsfw-control { padding-right: 48px; }
+.jsfw-unit {
+    position: absolute;
+    right: 14px; top: 11px;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    pointer-events: none;
+}
+.jsfw-textarea {
+    height: 76px;
+    resize: vertical;
+    padding: 10px 14px;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.jsfw-textarea:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15,23,42,.06);
+    outline: none;
+}
+
+/* IP白名单 */
+.jsfw-ip-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 22px;
+}
+.jsfw-ip-section .jsfw-label {
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.jsfw-ip-section .jsfw-label .jsfw-label-icon {
+    background: #dbeafe;
+    color: #2563eb;
+}
+.jsfw-ip-section .jsfw-textarea {
+    height: 64px;
+    background: #fff;
+}
+.jsfw-ip-hint {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* ---- 空状态 / 加载 ---- */
+.jsfw-empty {
+    padding: 72px 0;
+    text-align: center;
+    color: #94a3b8;
+    border: 2px dashed #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 14px;
+}
+.jsfw-empty-icon {
+    display: block;
+    width: 52px; height: 52px;
+    margin: 0 auto 18px;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    position: relative;
+}
+.jsfw-empty-icon:before {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px; height: 20px;
+    border-radius: 3px;
+    background: #e2e8f0;
+}
+.jsfw-loading {
+    padding: 72px 0;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+}
+.jsfw-spinner {
+    width: 40px; height: 40px;
+    margin: 0 auto 16px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #0f172a;
+    border-radius: 50%;
+    animation: jsfwSpin .65s linear infinite;
+}
+@keyframes jsfwSpin { to { transform: rotate(360deg); } }
+
+/* ---- 日志表格 ---- */
+.jsfw-log-wrap {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+}
+.jsfw-log-wrap .table { margin-bottom: 0; }
+.jsfw-log-wrap .table thead th {
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 14px 18px;
+}
+.jsfw-log-wrap .table tbody td {
+    padding: 13px 18px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+}
+.jsfw-log-wrap .table tbody tr:last-child td { border-bottom: none; }
+.jsfw-log-wrap .table tbody tr:hover td { background: #f8fafc; }
+.jsfw-log-wrap .table tbody tr.jsfw-empty-row td {
+    padding: 56px 18px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    background: #fff;
+}
+.jsfw-log-detail {
+    max-width: 620px;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* ---- 分页 ---- */
+.jsfw-log-wrap + .page { margin-top: 16px; }
+.jsfw-log-wrap + .page a {
+    display: inline-block;
+    padding: 6px 14px;
+    margin: 0 3px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #64748b;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    transition: all .12s ease;
+}
+.jsfw-log-wrap + .page a:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.jsfw-log-wrap + .page a.current {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #fff;
+}
+
+/* ---- 导入区 ---- */
+.jsfw-import-area {
+    margin-top: 18px;
+    padding: 22px 28px;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+.jsfw-import-area-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 14px;
+}
+.jsfw-import-area-title .jsfw-section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+.jsfw-import-area textarea {
+    width: 100%;
+    min-height: 120px;
+    box-sizing: border-box;
+    font-family: "SF Mono", Consolas, Monaco, monospace;
+    font-size: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    resize: vertical;
+    line-height: 1.6;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.jsfw-import-area textarea:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,.1);
+    outline: none;
+}
+
+/* ---- 响应式 ---- */
+@media (max-width: 1100px) {
+    .jsfw-stats { grid-template-columns: repeat(2, 1fr); }
+    .jsfw-grid  { grid-template-columns: repeat(2, 1fr); }
+    .jsfw-field.wide { grid-column: span 1; }
+    .jsfw-search { width: 150px; }
+    .jsfw-filter { width: 90px; }
+}
+@media (max-width: 680px) {
+    .jsfw-topbar { flex-wrap: wrap; }
+    .jsfw-actions { width: 100%; justify-content: flex-start; }
+    .jsfw-site-head { grid-template-columns: 1fr; }
+    .jsfw-head-actions { border-top: 1px solid #e2e8f0; padding-top: 12px; }
+    .jsfw-stats { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<script type="text/javascript">
+(function () {
+    'use strict';
+
+    function htmlEscape(value) {
+        return String(value === undefined || value === null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function setButtonLoading(btn, isLoading) {
+        if (isLoading) { btn._origText = btn.textContent; btn.textContent = btn._origText + '...'; btn.classList.add('is-loading'); btn.disabled = true; }
+        else { btn.classList.remove('is-loading'); btn.disabled = false; if (btn._origText !== undefined) btn.textContent = btn._origText; }
+    }
+    function requestPlugin(pluginName, functionName, args, callback, timeout) {
+        if (!timeout) timeout = 3600 * 1000;
+        $.ajax({ type: 'POST', url: '/plugin?action=a&s=' + functionName + '&name=' + pluginName, data: args, timeout: timeout, success: function (rdata) { if (callback) callback(rdata); }, error: function () { layer.msg('插件请求失败，请检查网络或面板状态', { icon: 2 }); } });
+    }
+
+    window.bt_js_challenge = {
+        sites: [],
+        filterText: '',
+        filterStatus: 'all',
+        selectedSites: {},
+        challengeTypes: [
+            { value: 'cookie_delay', title: 'Cookie延时' },
+            { value: 'fingerprint',   title: '浏览器指纹' },
+            { value: 'captcha',       title: '验证码' },
+            { value: 'arithmetic',    title: '算术验证' },
+            { value: 'pow_hash',      title: 'PoW / Hash' }
+        ],
+
+        getSites: function () {
+            var self = this;
+            $('.plugin_body').html('<div class="jsfw-loading"><div class="jsfw-spinner"></div>正在加载站点数据...</div>');
+            requestPlugin('xcy_safe', 'get_sites', {}, function (rdata) {
+                if (!rdata.status) { layer.msg(rdata.msg || '读取网站列表失败', { icon: 2 }); return; }
+                self.sites = rdata.sites || [];
+                self.challengeTypes = rdata.challenge_types || self.challengeTypes;
+                self.selectedSites = {};
+                self.renderSites();
+            });
+        },
+
+        renderSites: function () {
+            var stats = this.getStats(), list = '', visible = 0;
+            for (var i = 0; i < this.sites.length; i++) {
+                if (!this.matchFilter(this.sites[i])) continue;
+                list += this.renderSiteItem(this.sites[i], i);
+                visible++;
+            }
+            if (!list) list = '<div class="jsfw-empty"><div class="jsfw-empty-icon"></div>暂无匹配的网站</div>';
+            var batchCount = Object.keys(this.selectedSites).length;
+            var batchClass = batchCount > 0 ? ' visible' : '';
+            var self = this;
+            var allChecked = this.sites.length > 0 && this.sites.every(function (s, i) { return !self.matchFilter(s) || self.selectedSites[i]; });
+            var body =
+                '<div class="jsfw-topbar">' +
+                    '<div class="jsfw-heading"><h3 class="jsfw-title">站点 JS 挑战</h3><div class="jsfw-subtitle">' + visible + ' / ' + this.sites.length + ' 个网站</div></div>' +
+                    '<div class="jsfw-actions">' +
+                        '<label><input type="checkbox" id="jsfw-select-all" onchange="bt_js_challenge.toggleSelectAll(this)">全选</label>' +
+                        '<input class="jsfw-search" type="text" placeholder="搜索..." value="' + htmlEscape(this.filterText) + '" oninput="bt_js_challenge.onSearchInput(this)">' +
+                        '<select class="jsfw-filter" onchange="bt_js_challenge.setFilterStatus(this.value)">' +
+                            '<option value="all"' + this.selectedFilter('all') + '>全部</option>' +
+                            '<option value="enabled"' + this.selectedFilter('enabled') + '>已启用</option>' +
+                            '<option value="disabled"' + this.selectedFilter('disabled') + '>未启用</option>' +
+                            '<option value="unsupported"' + this.selectedFilter('unsupported') + '>不支持</option>' +
+                        '</select>' +
+                        '<button class="btn btn-default btn-sm" onclick="bt_js_challenge.getSites()">刷新</button>' +
+                        '<button class="btn btn-default btn-sm" onclick="bt_js_challenge.exportConfig()">导出</button>' +
+                        '<button class="btn btn-default btn-sm" onclick="bt_js_challenge.showImport()">导入</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="jsfw-batch-bar' + batchClass + '">' +
+                    '<span class="jsfw-batch-count">已选 ' + batchCount + ' 个站点</span>' +
+                    '<button class="btn btn-success btn-xs" onclick="bt_js_challenge.batchEnable()">批量启用</button>' +
+                    '<button class="btn btn-danger btn-xs" onclick="bt_js_challenge.batchDisable()">批量关闭</button>' +
+                    '<button class="btn btn-default btn-xs" onclick="bt_js_challenge.clearSelection()">取消</button>' +
+                '</div>' +
+                '<div class="jsfw-stats">' +
+                    this.renderStat('全部', stats.total, '', '共 ' + stats.total + ' 个站点') +
+                    this.renderStat('已保护', stats.enabled, 'active', stats.enabled + ' 个已启用') +
+                    this.renderStat('待启用', stats.disabled, '', stats.disabled + ' 个未配置') +
+                    this.renderStat('不兼容', stats.unsupported, 'warn', stats.unsupported + ' 个需处理') +
+                '</div>' +
+                '<div class="jsfw-site-list">' + list + '</div>' +
+                '<div id="jsfw-import-area" style="display:none;"></div>';
+            $('.plugin_body').html(body);
+            if (allChecked) { $('#jsfw-select-all').prop('checked', true); $('#jsfw-select-all').prop('indeterminate', false); }
+            else if (batchCount > 0) { $('#jsfw-select-all').prop('checked', false); $('#jsfw-select-all').prop('indeterminate', true); }
+        },
+
+        renderSiteItem: function (item, index) {
+            var setting = item.setting || {};
+            var enabled = !!setting.enabled;
+            var checked = enabled ? ' checked="checked"' : '';
+            var disabledAttr = item.supported ? '' : ' disabled="disabled"';
+            var typeTitle = this.typeTitle(setting.challenge_type || 'cookie_delay');
+            var stateClass = 'jsfw-site has-check';
+            if (enabled) stateClass += ' is-active';
+            if (this.selectedSites[index]) stateClass += ' is-selected';
+            if (!item.supported) stateClass += ' is-unsupported';
+            var statusCls = 'jsfw-pill', statusText = '未启用';
+            if (enabled && item.active) { statusCls += ' ok'; statusText = '正常'; }
+            if (enabled && !item.active) { statusCls += ' warn'; statusText = '未生效'; }
+            if (!item.supported) { statusCls += ' warn'; statusText = '不支持'; }
+            var checkedStr = this.selectedSites[index] ? ' checked="checked"' : '';
+            return '<div class="' + stateClass + '" data-index="' + index + '">' +
+                '<input class="jsfw-site-check" type="checkbox"' + checkedStr + ' onchange="bt_js_challenge.toggleSiteSelect(' + index + ', this)" onclick="event.stopPropagation();">' +
+                '<div class="jsfw-site-head">' +
+                '<div class="jsfw-site-head-left">' +
+                    '<span class="jsfw-site-name" title="' + htmlEscape(item.name) + '">' + htmlEscape(item.name) + '</span>' +
+                    '<span class="jsfw-site-path" title="' + htmlEscape(item.path || '') + '">' + htmlEscape(item.path || '无路径') + '</span>' +
+                    '<div class="jsfw-site-meta">' +
+                        '<span class="' + statusCls + '">' + statusText + '</span>' +
+                        '<span class="jsfw-pill">' + htmlEscape(typeTitle) + '</span>' +
+                        '<span class="jsfw-pill">' + htmlEscape(setting.cookie_ttl || 3600) + 's</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="jsfw-head-actions">' +
+                    '<label class="jsfw-switch"><input class="jsfw-enabled" type="checkbox"' + checked + disabledAttr + '><span class="jsfw-slider"></span><span>JS挑战</span></label>' +
+                    '<button class="btn btn-success btn-xs" id="jsfw-btn-' + index + '" onclick="bt_js_challenge.saveSite(' + index + ', this)"' + disabledAttr + '>保存</button>' +
+                    '<button class="btn btn-default btn-xs" onclick="bt_js_challenge.disableSite(' + index + ')"' + disabledAttr + '>关闭</button>' +
+                '</div></div>' +
+                '<div class="jsfw-site-body">' +
+                    '<div class="jsfw-site-section">' +
+                        '<div class="jsfw-section-title"><span class="jsfw-section-dot"></span><span>防护配置</span></div>' +
+                        '<div class="jsfw-grid">' +
+                            this.renderSelectField('挑战类型', 'jsfw-type', this.renderTypeOptions(setting.challenge_type || 'cookie_delay'), 'C', disabledAttr) +
+                            this.renderNumberField('有效期', 'jsfw-ttl', setting.cookie_ttl || 3600, 60, 86400, '秒', 'T', disabledAttr) +
+                            this.renderNumberField('延迟', 'jsfw-delay', setting.challenge_delay || 600, 0, 5000, 'ms', 'D', disabledAttr) +
+                            this.renderNumberField('PoW难度', 'jsfw-pow', setting.pow_difficulty || 3, 1, 5, '', 'P', disabledAttr) +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="jsfw-site-section">' +
+                        '<div class="jsfw-section-title"><span class="jsfw-section-dot"></span><span>自定义内容</span></div>' +
+                        '<div class="jsfw-grid">' +
+                            this.renderTextInput('页面标题', 'jsfw-title', setting.challenge_title || '星辰云IDC安全验证', 40, 'H', disabledAttr) +
+                            this.renderTextInput('提示文案', 'jsfw-text', setting.challenge_text || '正在检查你的浏览器安全性...', 120, 'M', disabledAttr) +
+                            this.renderTextInput('放行后缀', 'jsfw-ext', setting.exclude_ext || '', 180, 'E', disabledAttr, 'wide') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="jsfw-site-section">' +
+                        '<div class="jsfw-ip-section">' +
+                            '<div class="jsfw-label"><span class="jsfw-label-icon">W</span>IP 白名单</div>' +
+                            '<textarea class="jsfw-textarea jsfw-whitelist" maxlength="1000" placeholder="每行一个IP地址，支持CIDR格式&#10;例如：&#10;10.0.0.1&#10;172.16.0.0/12"' + disabledAttr + '>' + htmlEscape((setting.ip_whitelist || []).join('\n')) + '</textarea>' +
+                            '<div class="jsfw-ip-hint">白名单IP将跳过JS挑战，直接放行</div>' +
+                    '</div>' +
+                '</div></div></div>';
+        },
+
+        renderStat: function (label, value, cls, sub) { return '<div class="jsfw-stat ' + cls + '"><div class="jsfw-stat-top"><span class="jsfw-stat-dot"></span><span class="jsfw-stat-label">' + label + '</span></div><span class="jsfw-stat-value">' + value + '</span>' + (sub ? '<span class="jsfw-stat-sub">' + sub + '</span>' : '') + '</div>'; },
+        renderSelectField: function (label, cls, options, icon, disabled) { return '<label class="jsfw-field"><span class="jsfw-label">' + (icon ? '<span class="jsfw-label-icon">' + icon + '</span>' : '') + label + '</span><select class="bt-input-text jsfw-control ' + cls + '"' + disabled + '>' + options + '</select></label>'; },
+        renderNumberField: function (label, cls, value, min, max, unit, icon, disabled) { var u = unit ? '<span class="jsfw-unit">' + unit + '</span>' : ''; return '<label class="jsfw-field"><span class="jsfw-label">' + (icon ? '<span class="jsfw-label-icon">' + icon + '</span>' : '') + label + '</span><span class="jsfw-inline-unit"><input class="bt-input-text jsfw-control ' + cls + '" type="number" min="' + min + '" max="' + max + '" value="' + htmlEscape(value) + '"' + disabled + '>' + u + '</span></label>'; },
+        renderTextInput: function (label, cls, value, maxlength, icon, disabled, extraClass) { return '<label class="jsfw-field ' + (extraClass || '') + '"><span class="jsfw-label">' + (icon ? '<span class="jsfw-label-icon">' + icon + '</span>' : '') + label + '</span><input class="bt-input-text jsfw-control ' + cls + '" type="text" maxlength="' + maxlength + '" value="' + htmlEscape(value) + '"' + disabled + '></label>'; },
+        renderTypeOptions: function (value) { var h = ''; for (var i = 0; i < this.challengeTypes.length; i++) { var t = this.challengeTypes[i]; h += '<option value="' + htmlEscape(t.value) + '"' + (t.value === value ? ' selected="selected"' : '') + '>' + htmlEscape(t.title) + '</option>'; } return h; },
+        typeTitle: function (value) { for (var i = 0; i < this.challengeTypes.length; i++) { if (this.challengeTypes[i].value === value) return this.challengeTypes[i].title; } return 'Cookie延时'; },
+
+        getStats: function () {
+            var s = { total: this.sites.length, enabled: 0, disabled: 0, unsupported: 0 };
+            for (var i = 0; i < this.sites.length; i++) {
+                var it = this.sites[i];
+                if (!it.supported) s.unsupported++;
+                else if (it.setting && it.setting.enabled) s.enabled++;
+                else s.disabled++;
+            }
+            return s;
+        },
+        matchFilter: function (item) {
+            var t = this.filterText.toLowerCase();
+            if (t) { var h = String(item.name || '').toLowerCase() + ' ' + String(item.path || '').toLowerCase(); if (h.indexOf(t) === -1) return false; }
+            if (this.filterStatus === 'enabled') return !!(item.supported && item.setting && item.setting.enabled);
+            if (this.filterStatus === 'disabled') return !!(item.supported && !(item.setting && item.setting.enabled));
+            if (this.filterStatus === 'unsupported') return !item.supported;
+            return true;
+        },
+        onSearchInput: function (el) { this.filterText = el.value || ''; var self = this; if (this._st) clearTimeout(this._st); this._st = setTimeout(function () { self.renderSites(); }, 280); },
+        setFilterStatus: function (v) { this.filterStatus = v || 'all'; this.renderSites(); },
+        selectedFilter: function (v) { return this.filterStatus === v ? ' selected="selected"' : ''; },
+        toggleSelectAll: function (el) { this.selectedSites = {}; if (el.checked) { for (var i = 0; i < this.sites.length; i++) { if (!this.matchFilter(this.sites[i]) || !this.sites[i].supported) continue; this.selectedSites[i] = true; } } this.renderSites(); },
+        toggleSiteSelect: function (index, el) { if (el.checked) this.selectedSites[index] = true; else delete this.selectedSites[index]; this.renderSites(); },
+        clearSelection: function () { this.selectedSites = {}; this.renderSites(); },
+        getSelectedSiteNames: function () { var n = []; for (var i in this.selectedSites) { if (this.selectedSites.hasOwnProperty(i) && this.sites[i]) n.push(this.sites[i].name); } return n; },
+
+        saveSite: function (index, btnEl) {
+            var row = $('.jsfw-site[data-index="' + index + '"]');
+            var item = this.sites[index];
+            var args = {
+                site_name: item.name,
+                enabled: row.find('.jsfw-enabled').is(':checked') ? 1 : 0,
+                challenge_type: row.find('.jsfw-type').val(),
+                cookie_ttl: row.find('.jsfw-ttl').val(),
+                challenge_delay: row.find('.jsfw-delay').val(),
+                pow_difficulty: row.find('.jsfw-pow').val(),
+                challenge_title: row.find('.jsfw-title').val(),
+                challenge_text: row.find('.jsfw-text').val(),
+                exclude_ext: row.find('.jsfw-ext').val(),
+                ip_whitelist: row.find('.jsfw-whitelist').val()
+            };
+            if (btnEl) setButtonLoading(btnEl, true);
+            var self = this;
+            requestPlugin('xcy_safe', 'save_site', args, function (rdata) {
+                if (btnEl) setButtonLoading(btnEl, false);
+                layer.msg(rdata.msg || (rdata.status ? '保存成功' : '保存失败'), { icon: rdata.status ? 1 : 2 });
+                self.getSites();
+            }, 120000);
+        },
+        disableSite: function (index) {
+            var self = this, item = this.sites[index];
+            layer.confirm('确定关闭站点 <strong>' + htmlEscape(item.name) + '</strong> 的 JS 挑战？', { title: '关闭 JS 挑战', icon: 3, btn: ['确定关闭', '取消'] }, function (li) { layer.close(li); $('.jsfw-site[data-index="' + index + '"]').find('.jsfw-enabled').prop('checked', false); self.saveSite(index); });
+        },
+        batchEnable: function () {
+            var names = this.getSelectedSiteNames();
+            if (names.length === 0) { layer.msg('请先选择站点', { icon: 0 }); return; }
+            var self = this;
+            layer.confirm('确定对 ' + names.length + ' 个站点<strong>批量启用</strong> JS 挑战？', { title: '批量启用', icon: 3, btn: ['确定', '取消'] }, function (li) { layer.close(li); requestPlugin('xcy_safe', 'batch_enable_sites', { site_names: names.join(',') }, function (rdata) { layer.msg(rdata.msg || '批量操作完成', { icon: rdata.status ? 1 : 2 }); self.getSites(); }, 180000); });
+        },
+        batchDisable: function () {
+            var names = this.getSelectedSiteNames();
+            if (names.length === 0) { layer.msg('请先选择站点', { icon: 0 }); return; }
+            var self = this;
+            layer.confirm('确定对 ' + names.length + ' 个站点<strong>批量关闭</strong> JS 挑战？此操作不可恢复！', { title: '批量关闭', icon: 3, btn: ['确定关闭', '取消'] }, function (li) { layer.close(li); requestPlugin('xcy_safe', 'batch_disable_sites', { site_names: names.join(',') }, function (rdata) { layer.msg(rdata.msg || '批量操作完成', { icon: rdata.status ? 1 : 2 }); self.getSites(); }, 180000); });
+        },
+        exportConfig: function () {
+            var self = this;
+            requestPlugin('xcy_safe', 'export_config', {}, function (rdata) {
+                if (!rdata.status || !rdata.data) { layer.msg(rdata.msg || '导出失败', { icon: 2 }); return; }
+                var blob = new Blob([rdata.data], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url; a.download = 'js-challenge-config-' + new Date().toISOString().slice(0, 10) + '.json';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                layer.msg('配置已导出', { icon: 1 });
+            });
+        },
+        showImport: function () {
+            if ($('#jsfw-import-area').is(':visible')) { $('#jsfw-import-area').hide(); return; }
+            $('#jsfw-import-area').html('<div class="jsfw-import-area"><div class="jsfw-import-area-title"><span class="jsfw-section-dot"></span>批量导入配置</div><textarea id="jsfw-import-data" placeholder=\'{"xcyidc.com":{"enabled":true,"challenge_type":"cookie_delay",...}}\'></textarea><div style="margin-top:14px;display:flex;align-items:center;gap:8px;"><button class="btn btn-success btn-xs" onclick="bt_js_challenge.doImport()">确认导入</button><button class="btn btn-default btn-xs" onclick="bt_js_challenge.hideImport()">取消</button><span style="font-size:11px;color:#94a3b8;">导入将合并到现有配置</span></div></div>').show();
+        },
+        hideImport: function () { $('#jsfw-import-area').hide(); },
+        doImport: function () {
+            var data = $('#jsfw-import-data').val().trim();
+            if (!data) { layer.msg('请输入配置数据', { icon: 0 }); return; }
+            var self = this;
+            layer.confirm('确定导入配置？将会合并到现有站点配置中。', { title: '导入配置', icon: 3, btn: ['确认导入', '取消'] }, function (li) { layer.close(li); requestPlugin('xcy_safe', 'import_config', { data: data }, function (rdata) { layer.msg(rdata.msg || (rdata.status ? '导入成功' : '导入失败'), { icon: rdata.status ? 1 : 2 }); if (rdata.status) { self.hideImport(); self.getSites(); } }); });
+        },
+
+        getChallengeLogs: function (p) {
+            if (p === undefined) p = 1;
+            var self = this;
+            requestPlugin('xcy_safe', 'get_challenge_logs', { p: p, rows: 15, callback: 'bt_js_challenge.getChallengeLogs' }, function (rdata) {
+                if (!rdata.status) { layer.msg(rdata.msg || '读取挑战日志失败', { icon: 2 }); return; }
+                var rows = '';
+                for (var i = 0; i < rdata.data.length; i++) { var it = rdata.data[i]; var sc = it.status === '通过' ? 'jsfw-pill ok' : 'jsfw-pill warn'; rows += '<tr><td width="170">' + htmlEscape(it.time || '') + '</td><td width="130">' + htmlEscape(it.ip || '') + '</td><td width="160">' + htmlEscape(it.site || '') + '</td><td width="120">' + htmlEscape(it.type || '') + '</td><td width="80"><span class="' + sc + '">' + htmlEscape(it.status || '') + '</span></td><td width="70">' + htmlEscape(it.count || 1) + '</td><td><span class="jsfw-log-detail" title="' + htmlEscape(it.ua || '') + '">' + htmlEscape(it.ua || '') + '</span></td></tr>'; }
+                if (!rows) rows = '<tr class="jsfw-empty-row"><td colspan="7"><div class="jsfw-empty-icon"></div>暂无挑战日志</td></tr>';
+                $('.plugin_body').html('<div class="jsfw-topbar"><div class="jsfw-heading"><h3 class="jsfw-title">挑战日志</h3><div class="jsfw-subtitle">共 ' + (rdata.count || 0) + ' 条记录</div></div><div class="jsfw-actions"><button class="btn btn-default btn-sm" onclick="bt_js_challenge.getChallengeLogs()">刷新</button><button class="btn btn-danger btn-sm" onclick="bt_js_challenge.clearChallengeLogs()">清空日志</button></div></div><div class="jsfw-log-wrap"><table class="table"><thead><tr><th width="170">时间</th><th width="130">IP</th><th width="160">域名</th><th width="120">类型</th><th width="80">状态</th><th width="70">次数</th><th>UA</th></tr></thead><tbody>' + rows + '</tbody></table></div><div class="page">' + (rdata.page || '') + '</div>');
+            });
+        },
+        clearChallengeLogs: function () { var self = this; layer.confirm('确定清空所有挑战日志？', { title: '清空日志', icon: 3, btn: ['确定', '取消'] }, function (li) { layer.close(li); requestPlugin('xcy_safe', 'clear_challenge_logs', {}, function (rdata) { layer.msg(rdata.msg || (rdata.status ? '已清空' : '清空失败'), { icon: rdata.status ? 1 : 2 }); self.getChallengeLogs(); }); }); },
+        getLogs: function (p) {
+            if (p === undefined) p = 1;
+            var self = this;
+            requestPlugin('xcy_safe', 'get_logs', { p: p, rows: 12, callback: 'bt_js_challenge.getLogs' }, function (rdata) {
+                if (!rdata.status) { layer.msg(rdata.msg || '读取日志失败', { icon: 2 }); return; }
+                var rows = '';
+                for (var i = 0; i < rdata.data.length; i++) { var it = rdata.data[i]; rows += '<tr><td width="160">' + htmlEscape(it.time || '') + '</td><td width="80">' + htmlEscape(it.action || '') + '</td><td width="180">' + htmlEscape(it.site || '') + '</td><td><span class="jsfw-log-detail" title="' + htmlEscape(it.detail || '') + '">' + htmlEscape(it.detail || '') + '</span></td></tr>'; }
+                if (!rows) rows = '<tr class="jsfw-empty-row"><td colspan="4"><div class="jsfw-empty-icon"></div>暂无操作日志</td></tr>';
+                $('.plugin_body').html('<div class="jsfw-topbar"><div class="jsfw-heading"><h3 class="jsfw-title">操作日志</h3><div class="jsfw-subtitle">共 ' + (rdata.count || 0) + ' 条记录</div></div><div class="jsfw-actions"><button class="btn btn-default btn-sm" onclick="bt_js_challenge.getLogs()">刷新</button><button class="btn btn-danger btn-sm" onclick="bt_js_challenge.clearLogs()">清空日志</button></div></div><div class="jsfw-log-wrap"><table class="table"><thead><tr><th width="160">时间</th><th width="80">操作</th><th width="180">网站</th><th>详情</th></tr></thead><tbody>' + rows + '</tbody></table></div><div class="page">' + (rdata.page || '') + '</div>');
+            });
+        },
+        clearLogs: function () { var self = this; layer.confirm('确定清空所有操作日志？', { title: '清空日志', icon: 3, btn: ['确定', '取消'] }, function (li) { layer.close(li); requestPlugin('xcy_safe', 'clear_logs', {}, function (rdata) { layer.msg(rdata.msg || (rdata.status ? '已清空' : '清空失败'), { icon: rdata.status ? 1 : 2 }); self.getLogs(); }); }); }
+    };
+
+    $(function () {
+        $('.layui-layer-page').css({ 'width': '1180px' });
+        $('.bt-w-menu p').click(function () { $(this).addClass('bgw').siblings().removeClass('bgw'); });
+        bt_js_challenge.getSites();
+    });
+})();
+</script>

@@ -1,0 +1,9 @@
+{
+  "title": "星辰云防火墙",
+  "name": "xcy_safe",
+  "ps": "按网站启用星辰云 JS 挑战防火墙，支持批量操作、配置导入导出、IP白名单豁免，并提供操作日志、挑战日志和自动日志清理能力",
+  "versions": "1.2",
+  "checks": "/www/server/panel/plugin/xcy_safe",
+  "author": "星辰云",
+  "home": "https://xcyidc.com"
+}

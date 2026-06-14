@@ -1,0 +1,26 @@
+<div id="jsfw-view-operation-log">
+    <div class="jsfw-topbar">
+        <div class="jsfw-heading">
+            <h3 class="jsfw-title">操作日志</h3>
+            <div class="jsfw-subtitle"></div>
+        </div>
+        <div class="jsfw-actions">
+            <button class="btn btn-default btn-sm" onclick="bt_js_challenge.getLogs()">刷新</button>
+            <button class="btn btn-danger btn-sm" onclick="bt_js_challenge.clearLogs()">清理日志</button>
+        </div>
+    </div>
+    <div class="jsfw-log-wrap">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th width="160">时间</th>
+                    <th width="80">操作</th>
+                    <th width="180">网站</th>
+                    <th>详情</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="page" style="margin-top:15px"></div>
+</div>

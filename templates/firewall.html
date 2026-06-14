@@ -1,0 +1,30 @@
+<div id="jsfw-view-firewall">
+    <div class="jsfw-topbar">
+        <div class="jsfw-heading">
+            <h3 class="jsfw-title">站点 JS 挑战设置</h3>
+            <div class="jsfw-subtitle"></div>
+        </div>
+        <div class="jsfw-actions">
+            <label><input type="checkbox" id="jsfw-select-all" onchange="bt_js_challenge.toggleSelectAll(this)"> 全选</label>
+            <input class="bt-input-text jsfw-search" type="text" placeholder="搜索网站或路径" oninput="bt_js_challenge.onSearchInput(this)">
+            <select class="bt-input-text jsfw-filter" onchange="bt_js_challenge.setFilterStatus(this.value)">
+                <option value="all">全部</option>
+                <option value="enabled">已启用</option>
+                <option value="disabled">未启用</option>
+                <option value="unsupported">不支持</option>
+            </select>
+            <button class="btn btn-default btn-sm" onclick="bt_js_challenge.getSites()">刷新</button>
+            <button class="btn btn-default btn-sm" onclick="bt_js_challenge.exportConfig()">导出</button>
+            <button class="btn btn-default btn-sm" onclick="bt_js_challenge.showImport()">导入</button>
+        </div>
+    </div>
+    <div class="jsfw-batch-bar">
+        <span class="jsfw-batch-count"></span>
+        <button class="btn btn-success btn-xs" onclick="bt_js_challenge.batchEnable()">批量启用</button>
+        <button class="btn btn-danger btn-xs" onclick="bt_js_challenge.batchDisable()">批量关闭</button>
+        <button class="btn btn-default btn-xs" onclick="bt_js_challenge.clearSelection()">取消选择</button>
+    </div>
+    <div class="jsfw-stats"></div>
+    <div class="jsfw-site-list"></div>
+    <div id="jsfw-import-area" class="jsfw-import-area" style="display:none;"></div>
+</div>

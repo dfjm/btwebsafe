@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{title}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+  background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);
+}
+.card{
+  width:440px;max-width:100%;
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 32px rgba(15,23,42,.06),0 1px 4px rgba(15,23,42,.04);
+  padding:44px 40px 36px;text-align:center;
+  border:1px solid #f1f5f9;
+}
+.brand{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;color:#94a3b8;
+  text-transform:uppercase;letter-spacing:1.2px;
+  margin-bottom:32px;
+}
+.brand:before{content:"";width:8px;height:8px;border-radius:50%;background:#22c55e;}
+.shield{
+  width:48px;height:48px;margin:0 auto 20px;
+  background:#f0fdf4;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+}
+.shield svg{width:24px;height:24px;color:#22c55e;}
+h1{font-size:20px;font-weight:700;color:#0f172a;margin-bottom:10px;letter-spacing:-.1px;}
+.desc{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px;}
+.captcha-wrap{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
+  padding:20px;margin-bottom:16px;
+}
+.captcha-img{
+  display:block;width:200px;height:56px;margin:0 auto 16px;
+  border:1px solid #e2e8f0;border-radius:8px;background:#fff;
+  image-rendering:pixelated;
+}
+.captcha-row{
+  display:flex;justify-content:center;gap:10px;
+}
+.captcha-input{
+  width:150px;height:42px;border:1.5px solid #cbd5e1;border-radius:8px;
+  text-align:center;font-size:18px;font-weight:700;
+  text-transform:uppercase;letter-spacing:4px;outline:none;
+  color:#0f172a;background:#fff;
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.captcha-input:focus{
+  border-color:#22c55e;
+  box-shadow:0 0 0 3px rgba(34,197,94,.1);
+}
+.captcha-btn{
+  height:42px;padding:0 22px;border:none;border-radius:8px;
+  background:#22c55e;color:#fff;font-size:14px;font-weight:600;
+  cursor:pointer;transition:background .2s ease,box-shadow .2s ease;
+  box-shadow:0 2px 6px rgba(34,197,94,.2);
+}
+.captcha-btn:hover{background:#16a34a;}
+.captcha-btn:active{transform:scale(.98);}
+.captcha-error{
+  color:#ef4444;font-size:12px;font-weight:600;
+  margin-top:10px;min-height:18px;
+}
+.status{
+  font-size:12px;color:#94a3b8;min-height:20px;
+  transition:color .25s ease;
+}
+.status.ok{color:#22c55e;font-weight:600;}
+.footer{
+  margin-top:28px;padding-top:16px;
+  border-top:1px solid #f1f5f9;
+  font-size:11px;color:#cbd5e1;
+}
+@media(max-width:480px){
+  .card{padding:32px 24px 28px;border-radius:12px;}
+  h1{font-size:18px}
+  .desc{font-size:13px}
+  .captcha-input{width:130px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">XINGCHEN IDC</div>
+  <div class="shield">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+  </div>
+  <h1>{title}</h1>
+  <p class="desc">{text}</p>
+  <div class="captcha-wrap">
+    <img class="captcha-img" src="{captcha_image}" alt="安全验证码" id="captchaImg">
+    <form id="captchaForm" autocomplete="off">
+      <div class="captcha-row">
+        <input id="captchaAnswer" class="captcha-input" type="text" maxlength="8" placeholder="输入验证码" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button class="captcha-btn" type="submit">验证</button>
+      </div>
+      <div id="captchaError" class="captcha-error"></div>
+    </form>
+  </div>
+  <div class="status" id="status">请在上方输入验证码</div>
+  <div class="footer">安全防护由星辰云IDC提供</div>
+</div>
+<noscript><meta http-equiv="refresh" content="2"><p style="text-align:center;padding-top:40vh;font-family:sans-serif;color:#64748b;">请启用浏览器 JavaScript 后继续访问。</p></noscript>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var cookieName='{cookie_name}',token='{token}',ttl={ttl},delay={delay};
+  var captchaCode='{captcha_code}';
+  function state(v,c){var el=document.getElementById('status');if(el){el.textContent=v||'';el.className='status'+(c?' '+c:'');}}
+  function finish(v){
+    var d=new Date(Date.now()+ttl*1000).toUTCString();
+    document.cookie=cookieName+'='+v+'; Max-Age='+ttl+'; expires='+d+'; Path=/; SameSite=Lax';
+    state('验证码正确，正在跳转...','ok');
+    setTimeout(function(){try{location.reload();}catch(e){location.href=location.href;}},300);
+  }
+  var frm=document.getElementById('captchaForm');
+  if(frm){frm.onsubmit=function(e){
+    e.preventDefault();
+    var v=(document.getElementById('captchaAnswer').value||'').toUpperCase().replace(/\s+/g,'');
+    if(!v){document.getElementById('captchaError').textContent='请输入验证码';return;}
+    if(v===captchaCode){
+      document.getElementById('captchaError').textContent='';
+      finish(token+'.captcha.'+captchaCode.toLowerCase());
+    }else{
+      document.getElementById('captchaError').textContent='验证码错误，请重新输入';
+      document.getElementById('captchaAnswer').value='';
+      document.getElementById('captchaAnswer').focus();
+    }
+  };}
+});
+</script>
+</body>
+</html>

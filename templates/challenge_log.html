@@ -1,0 +1,29 @@
+<div id="jsfw-view-challenge-log">
+    <div class="jsfw-topbar">
+        <div class="jsfw-heading">
+            <h3 class="jsfw-title">挑战日志</h3>
+            <div class="jsfw-subtitle"></div>
+        </div>
+        <div class="jsfw-actions">
+            <button class="btn btn-default btn-sm" onclick="bt_js_challenge.getChallengeLogs()">刷新</button>
+            <button class="btn btn-danger btn-sm" onclick="bt_js_challenge.clearChallengeLogs()">清理挑战日志</button>
+        </div>
+    </div>
+    <div class="jsfw-log-wrap">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th width="170">时间</th>
+                    <th width="130">IP</th>
+                    <th width="160">域名</th>
+                    <th width="140">类型</th>
+                    <th width="80">状态</th>
+                    <th width="70">次数</th>
+                    <th>UA</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <div class="page" style="margin-top:15px"></div>
+</div>

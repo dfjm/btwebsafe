@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>{title}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+  background:linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%);
+}
+.card{
+  width:440px;max-width:100%;
+  background:#fff;border-radius:16px;
+  box-shadow:0 4px 32px rgba(15,23,42,.06),0 1px 4px rgba(15,23,42,.04);
+  padding:44px 40px 36px;text-align:center;
+  border:1px solid #f1f5f9;
+}
+.brand{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;color:#94a3b8;
+  text-transform:uppercase;letter-spacing:1.2px;
+  margin-bottom:32px;
+}
+.brand:before{content:"";width:8px;height:8px;border-radius:50%;background:#22c55e;}
+.spinner{
+  width:44px;height:44px;margin:0 auto 24px;
+  border:3.5px solid #e2e8f0;border-top-color:#22c55e;
+  border-radius:50%;animation:spin .75s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+h1{font-size:20px;font-weight:700;color:#0f172a;margin-bottom:12px;letter-spacing:-.1px;}
+.desc{font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px;}
+.pow-info{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;
+  padding:14px 18px;margin-bottom:18px;text-align:left;
+}
+.pow-info .row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0;font-size:12px;
+}
+.pow-info .row .lbl{color:#64748b;font-weight:600;}
+.pow-info .row .val{
+  font-family:"SF Mono",Consolas,Monaco,monospace;
+  color:#0f172a;font-weight:700;font-size:11px;
+  max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.progress-bar{
+  height:6px;background:#e2e8f0;border-radius:3px;margin-bottom:14px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);
+  border-radius:3px;width:0%;transition:width .3s ease;
+}
+.status{
+  font-size:12px;color:#94a3b8;min-height:20px;
+  transition:color .25s ease;
+}
+.status.ok{color:#22c55e;font-weight:600;}
+.status.hash{color:#3b82f6;font-weight:600;}
+.footer{
+  margin-top:28px;padding-top:16px;
+  border-top:1px solid #f1f5f9;
+  font-size:11px;color:#cbd5e1;
+}
+@media(max-width:480px){
+  .card{padding:32px 24px 28px;border-radius:12px;}
+  h1{font-size:18px}
+  .desc{font-size:13px}
+  .pow-info .row .val{max-width:140px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">XINGCHEN IDC</div>
+  <div class="spinner" id="spinner"></div>
+  <h1>{title}</h1>
+  <p class="desc">{text}</p>
+  <div class="pow-info">
+    <div class="row"><span class="lbl">算法</span><span class="val">SHA-256</span></div>
+    <div class="row"><span class="lbl">难度</span><span class="val">{pow_difficulty} 个前导零</span></div>
+    <div class="row"><span class="lbl">种子</span><span class="val" title="{pow_seed}">{pow_seed}</span></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  <div class="status" id="status">正在生成 Hash 证明...</div>
+  <div class="footer">安全防护由星辰云IDC提供</div>
+</div>
+<noscript><meta http-equiv="refresh" content="2"><p style="text-align:center;padding-top:40vh;font-family:sans-serif;color:#64748b;">请启用浏览器 JavaScript 后继续访问。</p></noscript>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+  var cookieName='{cookie_name}',token='{token}',ttl={ttl},delay={delay};
+  var seed='{pow_seed}',difficulty={pow_difficulty};
+  var target=new Array(difficulty+1).join('0');
+  function state(v,c){var el=document.getElementById('status');if(el){el.textContent=v||'';el.className='status'+(c?' '+c:'');}}
+  function progress(p){var el=document.getElementById('progress');if(el)el.style.width=p+'%';}
+  function simpleHash(s){
+    var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);}
+    return("00000000"+(h>>>0).toString(16)).slice(-8);
+  }
+  function hex(buf){
+    return Array.prototype.map.call(new Uint8Array(buf),function(x){return("00"+x.toString(16)).slice(-2);}).join('');
+  }
+  function digest(v){
+    if(window.crypto&&crypto.subtle&&window.TextEncoder){
+      return crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(hex);
+    }
+    return Promise.resolve(simpleHash(v));
+  }
+  function pause(){return new Promise(function(r){setTimeout(r,0);});}
+  function finish(v){
+    var d=new Date(Date.now()+ttl*1000).toUTCString();
+    document.cookie=cookieName+'='+v+'; Max-Age='+ttl+'; expires='+d+'; Path=/; SameSite=Lax';
+    var sp=document.getElementById('spinner');if(sp)sp.style.display='none';
+    progress(100);state('Hash 验证通过，正在跳转...','ok');
+    setTimeout(function(){try{location.reload();}catch(e){location.href=location.href;}},300);
+  }
+  setTimeout(function(){
+    (async function(){
+      var nonce=0;
+      while(true){
+        var h=await digest(seed+':'+nonce);
+        if(h.substr(0,difficulty)===target){
+          finish(token+'.pow.'+nonce+'.'+h);
+          return;
+        }
+        nonce++;
+        if(nonce%500===0){
+          state('正在计算 Hash: '+nonce+' 次尝试','hash');
+          progress(Math.min(95,Math.round(nonce/Math.pow(16,difficulty)*100)));
+          await pause();
+        }
+      }
+    })().catch(function(e){
+      state('Hash 计算失败，请刷新页面重试','err');
+    });
+  },delay);
+});
+</script>
+</body>
+</html>
